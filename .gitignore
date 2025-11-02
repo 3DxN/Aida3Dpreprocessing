@@ -1,0 +1,7 @@
+*.tif
+*.swp
+legacy
+venv
+__pycache__
+data/
+tmp/
