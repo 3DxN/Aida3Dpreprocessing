@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 
 # Scanning CD8 and gammaH2aX blocks (3D) to get z-layer with maximum surface across both. Used for visualisation in AIDA-3D. Corresponding H&E layers will be extracted at this z-layer.
 

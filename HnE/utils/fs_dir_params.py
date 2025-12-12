@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 import os
 
 def readable_dir(prospective_dir):

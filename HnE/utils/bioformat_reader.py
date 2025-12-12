@@ -1,3 +1,7 @@
+
+# SPDX-License-Identifier: BSD
+# Origin: https://github.com/CellProfiler/python-bioformats/blob/master/bioformats/formatreader.py
+
 import numpy as np
 import bioformats
 import javabridge as jutil
