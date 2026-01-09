@@ -5,4 +5,5 @@ legacy
 venv
 __pycache__
 data/
+rawdata/
 tmp/
