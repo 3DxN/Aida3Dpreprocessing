@@ -466,10 +466,11 @@ def main():
                     ta['COL'], ta['ROW'], args.colorWeightNUCL, args.colorWeightCYTO, 
                     args.cytoChannel, args.nuclearChannel) 
                     
-            # inserted 251101 - TODO remove        
-            temp_HnE_out_filename = Path(tiffWriteoutDir)/Path(f"pseudoHnE_COL_{ta['COL']}_ROW_{ta['ROW']}.tif")
-            print(colored(f"Writing {temp_HnE_out_filename}","yellow"))
-            imsave(temp_HnE_out_filename,pseudoHnEimage)  # tifffile.imwrite alias
+            # inserted 251101 - TODO remove     
+            # NOTE: May assemble these tiles into grid for direct conversion to DZI (however, may not be convenient with additional labels)
+            # temp_HnE_out_filename = Path(tiffWriteoutDir)/Path(f"pseudoHnE_COL_{ta['COL']}_ROW_{ta['ROW']}.tif")
+            # print(colored(f"Writing {temp_HnE_out_filename}","yellow"))
+            # imsave(temp_HnE_out_filename,pseudoHnEimage)  # tifffile.imwrite alias
 
             Tiff3DFilesForSegmentation.append(Tiff3DforSegm_filename)
 
