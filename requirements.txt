@@ -1,5 +1,6 @@
 boto3==1.40.64
 botocore==1.40.64
+cellpose==4.0.8
 future==1.0.0
 imageio==2.37.0
 jmespath==1.0.1

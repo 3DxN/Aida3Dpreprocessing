@@ -46,3 +46,8 @@ Imaris data is assumed to include a metadata `xml` file describing the geometric
 
 `python genHnE.py data/012523_303_1_63X_stitchable.xml --TIFFwriteout ./data/TIFFtiles 1 --nuclearChannel 3 --cytoChannel 4 --fixedZposition 11`
 
+
+2. Run segmentation
+```
+python src/segmentation/predCellpose3D.py --inDir data/TIFFtiles/ --outDir data/CellposeSegementations --tileJsonFilename data/features/tileArrangement.json
+```
