@@ -25,13 +25,18 @@ parser = argparse.ArgumentParser(
 parser.add_argument('pct_cd8_json_file') 
 parser.add_argument('pct_gh2ax_json_file') 
 parser.add_argument('mean_intensity_gh2ax_json_file') 
-parser.add_argument('-p','--plot_output_format', ) 
+parser.add_argument('-p','--plot_output_format', type=str, default='pdf') 
 parser.add_argument('-c', '--classes', action='store', dest='classList',
-                    type=str, nargs='*', default=['control', 'treated'],
+                    type=str, nargs=2, default=['control', 'treated'],
                     help="Examples: -c control -c treated")
 parser.add_argument('--num_pseudo_classes', type=int, default = 5)
 
 args = parser.parse_args()
+
+OUT_FILE_EXTENTION = args.plot_output_format
+if not OUT_FILE_EXTENTION in ['pdf','png']:
+    print(f"Unsupported file format for plot output: {OUT_FILE_EXTENTION}. Select png or pdf")
+    sys.exit(1)
 
 with open(args.pct_cd8_json_file, 'r') as pct_cd8_json_file, open(args.pct_gh2ax_json_file, 'r') as pct_gh2ax_json_file, open(args.mean_intensity_gh2ax_json_file, 'r') as mean_intensity_gh2ax_json_file:
     try:
@@ -63,7 +68,7 @@ plt.boxplot([pct_gh2ax[i] for i in CLASSES], showfliers=False)
 #plt.ylim(0,0.15)
 plt.xticks([1,2], CLASSES)
 plt.title('gH2AX ratio')
-plt.savefig(f'gh2ax_ratio_{timestampstring}.png')
+plt.savefig(f'gh2ax_ratio_{timestampstring}.{OUT_FILE_EXTENTION}')
 plt.clf()
 
 # cd8 ratio
@@ -71,14 +76,14 @@ plt.boxplot([pct_cd8[i] for i in CLASSES], showfliers=False)
 # plt.ylim(0,0.15)
 plt.xticks([1,2], CLASSES)
 plt.title('cd8+ ratio')
-plt.savefig(f'cd8_ratio_{timestampstring}.png')
+plt.savefig(f'cd8_ratio_{timestampstring}.{OUT_FILE_EXTENTION}')
 plt.clf()
 
 # mean gammaH2AX intensity
 plt.boxplot([mean_intensity_gh2ax[i] for i in CLASSES], showfliers=False)
 plt.xticks([1,2], CLASSES)
 plt.title('Mean Intensity')
-plt.savefig(f'mean_intensity_gh2ax_{timestampstring}.png') 
+plt.savefig(f'mean_intensity_gh2ax_{timestampstring}.{OUT_FILE_EXTENTION}') 
 plt.clf()
 
 
@@ -139,7 +144,7 @@ for idx,data in enumerate(DATA):
     plt.title('PCA')
     plt.xlabel('PCA1')
     plt.ylabel('PCA2')
-    plt.savefig((CLASSES[idx] if len(DATA)>1 else 'combined') + '_all_pca_500_700_{timestampstring}.png')
+    plt.savefig((CLASSES[idx] if len(DATA)>1 else 'combined') + f'_all_pca_500_700_{timestampstring}.{OUT_FILE_EXTENTION}')
 
     umap = umap.UMAP(n_components=2)
     data_transformed = umap.fit_transform(data[:,features_idx])
@@ -148,16 +153,16 @@ for idx,data in enumerate(DATA):
     plt.title('UMAP')
     plt.xlabel('UMAP1')
     plt.ylabel('UMAP2')
-    plt.savefig((CLASSES[idx] if len(DATA)>1 else 'combined') + '_all_umap_500_700_{timestampstring}.png')
+    plt.savefig((CLASSES[idx] if len(DATA)>1 else 'combined') + f'_all_umap_500_700_{timestampstring}.{OUT_FILE_EXTENTION}')
 
     plt.clf()
     hmap = pseudo_class_to_heatmap(lbl[:N_CLASS[0]], CELLIDS[:N_CLASS[0]], NEIGHBORS[:N_CLASS[0]],n_classes=N_PSEUDO_CLASSES)
     seaborn.heatmap(hmap,vmin=0,vmax=0.7)
-    plt.savefig('heatmap_treated_{timestampstring}.png')
+    plt.savefig(f'heatmap_treated_{timestampstring}.{OUT_FILE_EXTENTION}')
     plt.clf()
     hmap = pseudo_class_to_heatmap(lbl[N_CLASS[0]:], CELLIDS[N_CLASS[0]:], NEIGHBORS[N_CLASS[0]:],n_classes=N_PSEUDO_CLASSES)
     seaborn.heatmap(hmap,vmin=0,vmax=0.7)
-    plt.savefig('heatmap_control_{timestampstring}.png')
+    plt.savefig(f'heatmap_control_{timestampstring}.{OUT_FILE_EXTENTION}')
 
 print(f"GammaH2AX texture analysis in {time() - texture_analysis_start_time} seconds")
 print('')

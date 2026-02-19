@@ -2,16 +2,25 @@ from radiomics.glcm import RadiomicsGLCM as glcm
 import SimpleITK as sitk
 from scipy import ndimage
 from scipy.ndimage.morphology import binary_dilation, binary_erosion
+from scipy.spatial.distance import cdist
 import numpy as np
 from config import *
-from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
-from PIL import Image
-from skimage import io, measure
+from skimage.measure import regionprops, label
+
+
+def get_bounding_boxes(image):
+	props = regionprops(image)
+	bboxes = {}
+	for prop in props:
+        # prop.bbox = (min_row, min_col, max_row, max_col) for 2‑D
+        # 3D result: (min_z, min_row, min_col, max_z, max_row, max_col)
+		bboxes[prop.label] = prop.bbox
+	return bboxes
 
 # gateway functions to compute features for roi using in parallel
 # Parallelize neighbor finding
-def process_label(lbl, gh2ax_segmentation, cd8_segmentation, radii):
+def numbers_of_neighbors_within_radius(lbl, gh2ax_segmentation, cd8_segmentation, radii):
     if lbl == 0:
         return None
     n = get_neighbors(lbl, gh2ax_segmentation, cd8_segmentation, radius=radii)
@@ -114,7 +123,79 @@ def get_neighbors(lbl, img, img2=None, radius=[64]):
 	return neighbors
 
 """
+Instead of defining neighborhood criterium by distance from centroid of label in image 1 to any point of label in image 2 (function `get_neighbors`):
+May replace this by working with centroids of labels in two images (initially) - and correct by, e.g., diameter of labels if necessary (likely it is not).
+Note: Search restricted to segmentation labels actually identified as corresponding to, e.g., CD8 or GH2AX
+"""
+def get_neighbors_by_centroids(im1, im2, radius=[64]):
+
+	#im1_bboxes=get_bounding_boxes(im1)
+	#im2_bboxes=get_bounding_boxes(im2)	
+
+	regions1 = regionprops(label(im1)) 
+	regions2 = regionprops(label(im2))
+
+
+	pairwise_distances = {}
+
+	for r1 in regions1:
+		id1 = r1.label
+		coords1 = r1.coords  # (N1, 2) array of (row, col)
+
+		pairwise_distances[id1] = {}
+
+		for r2 in regions2:
+			id2 = r2.label
+			coords2 = r2.coords  # (N2, 2)
+
+			# Compute all pairwise distances between pixels of the two regions
+			d = cdist(coords1, coords2)  # shape (N1, N2)
+
+			# Shortest distance between the two regions
+			min_dist = d.min()
+
+			pairwise_distances[id1][id2] = min_dist
+
+	print("PAIRWISE DISTANCES")
+	for id1, row in pairwise_distances.items(): 
+		for id2, dist in row.items(): 
+			print(f"Region {id1} (img1) → Region {id2} (img2): {dist:.2f} pixels")
+
+
+
+	"""
+	roi = im1==lbl
+
+	# get centroid
+	zc,yc,xc = ndimage.measurements.center_of_mass(roi)
+
+	# draw sphere with given radius
+	z,y,x = np.mgrid[0:im1.shape[0]:1, 0:im1.shape[1]:1, 0:im1.shape[2]:1]
+
+	neighbors = []
+	for r in radius:
+		mask = np.sqrt((z - zc)**2 + (y - yc)**2 + (x - xc)**2)
+		mask[mask > r] = 0
+		mask[mask > 0] = 1
+
+		# use circle as mask
+		neighborhood = (im1 if im2 is None else im2)*mask
+		if im2 is None:
+			neighborhood[neighborhood==lbl] = 0
+
+		# return neighbors
+		#neighbors.append(len(np.unique(neighborhood)))
+		neighbors.append(np.unique(neighborhood))
+
+	return neighbors
+	"""
+
+
+"""
 # Superseeded by `get_cd8_segmentation_by_dilation`
+
+from concurrent.futures import ProcessPoolExecutor
+
 def process_chunk(chunk, segmentation, cd8_mask, cd8_dapi_box_overlap_threshold):
 	results = []
 	#print(f'{chunk=}')
@@ -169,7 +250,7 @@ def get_cd8_segmentation_by_dilation(segmentation, cd8_mask):
 	#		  - label image retaining only segments where CD8 is positive
 	retainedLabels = []	
 	
-	props = measure.regionprops(segmentation)
+	props = regionprops(segmentation)
 	bboxes = {}
 	for prop in props:
         # prop.bbox = (min_row, min_col, max_row, max_col) for 2‑D

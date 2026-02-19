@@ -51,3 +51,23 @@ Imaris data is assumed to include a metadata `xml` file describing the geometric
 ```
 python src/segmentation/predCellpose3D.py --inDir data/TIFFtiles/ --outDir data/CellposeSegementations --tileJsonFilename data/features/tileArrangement.json
 ```
+
+3. Run CD8/GH2AX analysis
+```
+python src/proximityAnalysis/analyze_multi.py 
+
+```
+Note: Set parameters in file `src/proximityAnalysis/config.py` (to be replaced by `argparse` interface)
+
+4. Plot results
+```
+python src/proximityAnalysis/plotRatios.py 
+usage: PlotRatios [-h] [-p PLOT_OUTPUT_FORMAT] [-c [CLASSLIST ...]] [--num_pseudo_classes NUM_PSEUDO_CLASSES]
+                  pct_cd8_json_file pct_gh2ax_json_file mean_intensity_gh2ax_json_file
+PlotRatios: error: the following arguments are required: pct_cd8_json_file, pct_gh2ax_json_file, mean_intensity_gh2ax_json_file
+```
+e.g.,
+```
+python src/proximityAnalysis/plotRatios.py pct_cd8_2026_02_19-11_24_40.json pct_gh2ax_2026_02_19-10_55_23.json mean_intensity_gh2ax_2026_02_19-11_24_40.json -c control control -p pdf
+```
+

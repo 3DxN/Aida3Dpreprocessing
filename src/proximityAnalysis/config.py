@@ -5,10 +5,11 @@ SEGMENTATION_PATH = ['../012523_303_1_63X_stitchable','../013023_332_001_63X']
 RAW_IMAGE_PATH = ['../012523_303_1_63X_stitchable','../013023_332_001_63X']
 XML_FILES_PATH = ['../012523_303_1_63X_stitchable/012523_303_1_63X_stitchable.xml','../013023_332_001_63X/013023_332_001_63X.xml']
 
-CLASSES = ['control']
-SEGMENTATION_PATH = ['./data/CellposeSegmentations']
+# Intermediate dummy config for testing
+CLASSES = [''] # Provided by argparse
+SEGMENTATION_PATH = ['./data/CellposeSegmentations','./data/CellposeSegmentations']
 RAW_IMAGE_PATH = ['./data/raw']
-XML_FILES_PATH = ['./data/raw/012523_303_1_63X_stitchable.xml']
+XML_FILES_PATH = ['./data/raw/012523_303_1_63X_stitchable.xml','./data/raw/012523_303_1_63X_stitchable.xml']
 
 
 
