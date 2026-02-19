@@ -6,7 +6,9 @@ import numpy as np
 from config import *
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
- 
+from PIL import Image
+from skimage import io, measure
+
 # gateway functions to compute features for roi using in parallel
 # Parallelize neighbor finding
 def process_label(lbl, gh2ax_segmentation, cd8_segmentation, radii):
@@ -111,20 +113,20 @@ def get_neighbors(lbl, img, img2=None, radius=[64]):
 
 	return neighbors
 
-
+"""
+# Superseeded by `get_cd8_segmentation_by_dilation`
 def process_chunk(chunk, segmentation, cd8_mask, cd8_dapi_box_overlap_threshold):
 	results = []
+	#print(f'{chunk=}')
 	for lbl in chunk:
 		if lbl == 0:
 			continue
-
 		roi = segmentation == lbl
 		roi_dilated = binary_dilation(roi, iterations=3)
 		roi_eroded = binary_erosion(roi, iterations=3)
 		roi_boundary = np.logical_xor(roi_dilated, roi_eroded)
 		cd8_roi = cd8_mask * roi_boundary
 		cover = np.count_nonzero(cd8_roi) / np.count_nonzero(roi_boundary)
-
 		if cover < cd8_dapi_box_overlap_threshold:
 			results.append((lbl, 0))
 		else:
@@ -153,26 +155,66 @@ def get_cd8_segmentation_by_dilation(segmentation, cd8_mask, num_chunks=16):
 
 	return cd8_nuclei_segmentation
 
-## Original code
-# def get_cd8_segmentation_by_dilation(segmentation, cd8_mask):
-# 	cd8_nuclei_segmentation = segmentation.copy()
-# 	print(f'length of unique element: {len(np.unique(segmentation))}')
-#
-# 	for lbl in np.unique(segmentation):
-# 		if lbl == 0:
-# 			continue
-# 		roi = segmentation==lbl
-# 		roi_dilated = binary_dilation(roi, iterations=3)
-# 		roi_eroded = binary_erosion(roi, iterations=3)
-# 		roi_boundary = np.logical_xor(roi_dilated,roi_eroded)
-# 		cd8_roi = cd8_mask*roi_boundary
-# 		cover = np.count_nonzero(cd8_roi)/np.count_nonzero(roi_boundary)
-#
-# 		if cover < cd8_dapi_box_overlap_threshold:
-# 			cd8_nuclei_segmentation[roi] = 0
-# 		# else:
-# 		# 	print(lbl)
-# 	return cd8_nuclei_segmentation
+"""
+
+
+def get_cd8_segmentation_by_dilation(segmentation, cd8_mask):
+	cd8_nuclei_segmentation = segmentation.copy()
+	labelIDs = np.unique(segmentation)
+	print(f'CD8 analysis with segmentation label image. Number of segments: {len(labelIDs)-1}')
+	## Faster version of function `get_cd8_segmentation_by_dilation`. 
+	## 500x speed up by restricting morphological ops to neighborhood of labels.
+	# INPUT: semantic segmentation label map, CD8 mask (thresholded CD8 image)
+	# OUTPUT: - list of labels, where there is sufficient overlap between label envelope (i.e., CD8 positive) 
+	#		  - label image retaining only segments where CD8 is positive
+	retainedLabels = []	
+	
+	props = measure.regionprops(segmentation)
+	bboxes = {}
+	for prop in props:
+        # prop.bbox = (min_row, min_col, max_row, max_col) for 2‑D
+        # 3D result: (min_z, min_row, min_col, max_z, max_row, max_col)
+		bboxes[prop.label] = prop.bbox
+
+	for lbl in labelIDs[1:]: # Value 0 corresponds to background label (by convention)
+		# Crop segmentation by bounding box, then extend for dilation
+		DL = 3 #DILATION_RANGE
+		
+		bbox = bboxes[lbl]
+		dilated_bbox = (bbox[0]-DL,bbox[1]-DL,bbox[2]-DL,bbox[3]+DL,bbox[4]+DL,bbox[5]+DL)
+		xmin,ymin,zmin,xmax,ymax,zmax=dilated_bbox
+
+		# Crop at margins, no padding
+		xmin,ymin,zmin = max(0,xmin), max(0,ymin), max(0,zmin)
+		segmentationImgDim= segmentation.shape
+		xmax,ymax,zmax = min(segmentationImgDim[0],zmax),min(segmentationImgDim[1],ymax),min(segmentationImgDim[2],zmax)
+	
+		segmentation_crop_with_margin =  segmentation[xmin:xmax,ymin:ymax,zmin:zmax]
+		cd8_mask_crop_with_margins = cd8_mask[xmin:xmax,ymin:ymax,zmin:zmax]
+
+		roi = segmentation_crop_with_margin==lbl
+		
+		if segmentation_crop_with_margin.size == 0:
+			pass #continue
+		roi_dilated = binary_dilation(roi, iterations=3)
+		roi_eroded = binary_erosion(roi, iterations=3)
+		roi_boundary = np.logical_xor(roi_dilated,roi_eroded)
+		cd8_roi = cd8_mask_crop_with_margins*roi_boundary
+		roi_boundary_count = np.count_nonzero(roi_boundary)
+		if roi_boundary_count == 0: # avoid div0
+			continue 
+		overlap = np.count_nonzero(cd8_roi)/roi_boundary_count
+		###print(overlap, end=' ')
+		if overlap > cd8_dapi_box_overlap_threshold:
+			print(f"Label retained: {lbl}")  # Labels to retain for the CD8 segment image!
+			retainedLabels.append(lbl)
+	
+	# Generate segmentation label image where only `retainedLabels` values are present		
+	mask = np.isin(segmentation, retainedLabels)
+	cd8_nuclei_segmentation = np.full_like(segmentation, fill_value=0)
+	cd8_nuclei_segmentation[mask] = segmentation[mask]
+
+	return cd8_nuclei_segmentation
 
 
 def pseudo_class_to_histogram_neighbors(pseudo_labels, cellids, neighbors, n_classes=None, normalize=False):

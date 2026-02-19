@@ -77,7 +77,7 @@ print('Segmentation data anisotropy:', voxelAnisotropy)
 if args.anisotropy > 0.0:
     voxelAnisotropy = args.anisotropy
 
-SEGMENTATION_MASK_FILE_SUFFIX = "_cp_masks"
+SEGMENTATION_MASK_FILE_SUFFIX = '_CELLPOSE-LABELS'
 
 # Iterating through the tileArrangement.json
 for imageFileName, isNotEmpty in zip(tileDataDict['tiff3DFilesForSegmentation'], tileDataDict['tileNotEmpty']):
@@ -88,7 +88,7 @@ for imageFileName, isNotEmpty in zip(tileDataDict['tiff3DFilesForSegmentation'],
         continue
    
     inFileImagePath = os.path.join(args.inDir, imageFileName)
-    outFileLabelImagePath = os.path.join(args.outDir,os.path.splitext(imageFileName)[0] + '_CELLPOSE-LABELS'+SEGMENTATION_MASK_FILE_SUFFIX+os.path.splitext(imageFileName)[1])
+    outFileLabelImagePath = os.path.join(args.outDir,os.path.splitext(imageFileName)[0] + SEGMENTATION_MASK_FILE_SUFFIX+os.path.splitext(imageFileName)[1])
     print(f"{outFileLabelImagePath=}")
     if exists(outFileLabelImagePath):
         print('  --> Cellpose segmentation exists. Skipping ...')
@@ -114,7 +114,7 @@ for imageFileName, isNotEmpty in zip(tileDataDict['tiff3DFilesForSegmentation'],
     
     # save results as png
     #io.save_to_png(img, masks, flows, filename)
-    io.save_masks(img, masks, flows, outFileLabelImagePath, suffix=SEGMENTATION_MASK_FILE_SUFFIX, png=False, tif=True,  save_flows=False, save_outlines=True, save_txt=True, save_mpl=True)    
+    io.save_masks(img, masks, flows, outFileLabelImagePath, png=False, tif=True,  save_flows=False, save_outlines=True, save_txt=True, save_mpl=True)    
 
     #dY,dX,cellprob = flows[3]
     
