@@ -18,7 +18,7 @@ import json
 import umap
 from imaris_ims_file_reader.ims import ims_reader
 from config import SEGMENTATION_PATH, RAW_IMAGE_PATH, XML_FILES_PATH, CLASSES, gH2AX_threshold, cd8_threshold, gH2AX__pixel_count_threshold, N_PSEUDO_CLASSES, radii
-from utils_multi import get_cd8_segmentation_by_dilation, compute_features_for_roi, find_neighbors, process_label, pseudo_class_to_heatmap
+from utils_multi import get_cd8_segmentation_by_dilation, compute_features_for_roi, find_neighbors, process_label
 from joblib import Parallel, delayed
 
 import warnings
@@ -213,209 +213,15 @@ for idx, treatmentClass in enumerate(CLASSES):
     # print(gh2ax_sum/gh2ax_ctr)
     featureFile.close()
 
-print('CELL ANALYSIS COMPLETED IN ')
-elapsed_time = time.time() - start_time0
-print(f' {elapsed_time} seconds')
+print(f'CELL ANALYSIS COMPLETED IN {time.time() - start_time0} seconds')
 
-"""
-TODO:
-    Save (for plotting) pct_cd8, pct_gh2ax
-"""
+
+# Save (for plotting) pct_cd8, pct_gh2ax
+
 with open(PCT_GH2AX_FILE, 'w') as pctGH2AXFile:
     json.dump(pct_gh2ax, pctGH2AXFile)
 with open(PCT_CD8_FILE, 'w') as pctCD8File:
     json.dump(pct_cd8, pctCD8File)
 with open(MEAN_INTENSITY_GH2AX_FILE, 'w') as meanIntensityGH2AXFile:
     json.dump(mean_intensity_gh2ax, meanIntensityGH2AXFile)
-
-
-"""
-print('STARTING Rest of the analysis')
-start_time1 = time.time()
-t,p = stats.ttest_ind(pct_gh2ax[CLASSES[0]],pct_gh2ax[CLASSES[1]],equal_var=False)
-print('gamma H2AX+ cell ratio p-value:', p)
-
-t,p = stats.ttest_ind(pct_cd8[CLASSES[0]],pct_cd8[CLASSES[1]],equal_var=False)
-print('CD8+ cell ratio p-value:' ,p)
-
-# gh2ax ratio
-plt.boxplot([pct_gh2ax[i] for i in CLASSES], showfliers=False)
-plt.ylim(0,0.15)
-plt.xticks([1,2], CLASSES)
-plt.title('gH2AX ratio')
-plt.savefig('gh2ax_ratio.png')
-plt.clf()
-
-# cd8 ratio
-plt.boxplot([pct_cd8[i] for i in CLASSES], showfliers=False)
-# plt.ylim(0,0.15)
-plt.xticks([1,2], CLASSES)
-plt.title('cd8+ ratio')
-plt.savefig('cd8_ratio.png')
-plt.clf()
-
-# mean gammaH2AX intensity
-plt.boxplot([mean_intensity_gh2ax[i] for i in CLASSES], showfliers=False)
-plt.xticks([1,2], CLASSES)
-plt.title('Mean Intensity')
-plt.savefig('mean_intensity_gh2ax.png') 
-plt.clf()
-
-################### gammaH2AX texture analysis #############################
-print('Extracting gammaH2AX texture for analysis...')
-start_time = time.time()
-DATA = []
-NEIGHBORS = []
-CELLIDS = []
-N_CLASS = {}
-combine = True
-scale = True
-for idx,c in enumerate(CLASSES):
-    f = open(c + '_texture_features_w_neighbors.csv', 'r')
-    lines = f.readlines()
-    d = [i.strip().split(',')[2:8] for i in lines]
-    n = [[int(float(j)) for j in i.strip().split(',')[8:]] for i in lines]
-
-    cids = [[c] + i.strip().split(',')[:2] for i in lines]
-
-    N_CLASS[idx] = len(d)
-
-    if combine:
-        DATA += d
-        CELLIDS += cids
-        NEIGHBORS += n
-    else:
-        DATA.append(d)
-        CELLIDS.append(cids)
-        NEIGHBORS.append(n)
-
-if combine:
-    DATA = [np.array(DATA).astype(float)]
-else:
-    for i in DATA:
-        DATA[i] = np.array(DATA[i].astype(float))
-
-clf = KMeans(n_clusters=N_PSEUDO_CLASSES, algorithm='full', max_iter=1000, tol=1e-7)
-
-for idx,data in enumerate(DATA):
-    #scale to 0-1
-    if scale:
-        scaler = MinMaxScaler()
-        data = scaler.fit_transform(data)
-
-    features = ['AutocorrelationFeatureValue', 'ClusterProminenceFeatureValue', 'ContrastFeatureValue', 'CorrelationFeatureValue', 'JointEnergyFeatureValue', 'IdFeatureValue']
-    features_idx = [3,5,2,1,4,0]
-
-    lbl = clf.fit_predict(data[:,features_idx])
-
-    pca = PCA(n_components=2)
-    data_transformed = pca.fit_transform(data[:,features_idx])
-    print(data_transformed.shape)
-
-    plt.scatter(data_transformed[:,0], data_transformed[:,1], c=lbl)
-    plt.title('PCA')
-    plt.xlabel('PCA1')
-    plt.ylabel('PCA2')
-    plt.savefig((CLASSES[idx] if len(DATA)>1 else 'combined') + '_all_pca_500_700.png')
-
-    umap = umap.UMAP(n_components=2)
-    data_transformed = umap.fit_transform(data[:,features_idx])
-    plt.clf()
-    plt.scatter(data_transformed[:,0], data_transformed[:,1], c=lbl)
-    plt.title('UMAP')
-    plt.xlabel('UMAP1')
-    plt.ylabel('UMAP2')
-    plt.savefig((CLASSES[idx] if len(DATA)>1 else 'combined') + '_all_umap_500_700.png')
-
-    plt.clf()
-    hmap = pseudo_class_to_heatmap(lbl[:N_CLASS[0]], CELLIDS[:N_CLASS[0]], NEIGHBORS[:N_CLASS[0]],n_classes=N_PSEUDO_CLASSES)
-    seaborn.heatmap(hmap,vmin=0,vmax=0.7)
-    plt.savefig('heatmap_treated.png')
-    plt.clf()
-    hmap = pseudo_class_to_heatmap(lbl[N_CLASS[0]:], CELLIDS[N_CLASS[0]:], NEIGHBORS[N_CLASS[0]:],n_classes=N_PSEUDO_CLASSES)
-    seaborn.heatmap(hmap,vmin=0,vmax=0.7)
-    plt.savefig('heatmap_control.png')
-
-elapsed_time = time.time() - start_time
-print(f"Time taken for the gammaH2AX texture analysis: {elapsed_time} seconds")
-print('')
-
-####################### gammaH2AX - CD8 proximity ##################################
-
-print('Analyzing gammaH2AX and CD8 proximity...')
-start_time = time.time()
-neighbors_gh2ax = {}
-neighbors_cd8 = {}
-neighbors_random_gh2ax = {}
-neighbors_random_cd8 = {}
-for idx,c in enumerate(CLASSES):
-    print(f'CLASS: {c}')
-    tree = ET.parse(XML_FILES_PATH[idx])
-    root = tree.getroot()
-    neighbors_gh2ax[c] = []
-    neighbors_random_gh2ax[c] = []
-    for stack in root.iter('Stack'):
-        col,row = int(stack.get('COL')), int(stack.get('ROW'))
-        print(f'col: {col}, row: {row}')
-
-        cd8_segment_file = 'tile__H%03d_V%03d_cd8.tif' % (col,row)
-        gh2ax_segment_file = 'tile__H%03d_V%03d_gh2ax.tif' % (col,row)
-        nuclei_segment_file = 'tile__H%03d_V%03d_CELLPOSE-LABELS_cp_masks.tif' % (col,row)
-
-        print(f"READING: {cd8_segment_file=}, {gh2ax_segment_file=}, {nuclei_segment_file=}")
-
-        cd8_segmentation = tifffile.imread(os.path.join(SEGMENTATION_PATH[idx], cd8_segment_file))
-        gh2ax_segmentation = tifffile.imread(os.path.join(SEGMENTATION_PATH[idx], gh2ax_segment_file))
-        nuclei_segmentation = tifffile.imread(os.path.join(SEGMENTATION_PATH[idx], nuclei_segment_file))
-
-        labels = np.unique(gh2ax_segmentation)
-        labels = labels[labels != 0]  # Exclude background label
-
-        # Parallelize the label processing
-        n_jobs = os.cpu_count() // 2  # Adjust based on your system
-        print(f'os.cpu_count: {os.cpu_count()}, n_jobs: {n_jobs}')
-        results = Parallel(n_jobs=n_jobs)(
-            delayed(process_label)(lbl, gh2ax_segmentation, cd8_segmentation, radii) for lbl in tqdm(labels))
-
-        # Filter out None results and append to neighbors_gh2ax
-        start_time_inner = time.time()
-        for result in results:
-            if result is not None:
-                lbl, neighbors = result
-                neighbors_gh2ax[c].append(neighbors)
-
-        elapsed_time = time.time() - start_time_inner
-        print(f"Time taken for finding neighbors of {c}, row: {row}, col: {col}: {elapsed_time} seconds")
-
-        # random_labels = np.random.permutation(nuclei_segmentation.max())[:100] + 1
-        # for lbl in random_labels:
-        # 	n = get_neighbors(lbl, nuclei_segmentation, cd8_segmentation, radius=radii)
-        # 	neighbors_random_gh2ax[c].append(n)
-        # 	n = get_neighbors(lbl, nuclei_segmentation, gh2ax_segmentation, radius=radii)
-        # 	neighbors_random_cd8[c].append(n)
-
-for i in CLASSES:
-    neighbors_gh2ax[i] = np.array(neighbors_gh2ax[i])
-    np.savetxt('gh2ax_to_proximity_%s.csv'%(i), neighbors_gh2ax[i], delimiter=',')
-
-t,p = stats.ttest_ind(neighbors_gh2ax[CLASSES[0]],neighbors_gh2ax[CLASSES[1]],equal_var=False)
-print('gammaH2AX (control vs treated) u-test p-values:', p)
-
-for idx,v in enumerate(radii):
-    plt.boxplot([neighbors_gh2ax[i][:,idx].flatten()-1 for i in CLASSES], showfliers=False, meanline=True)
-    # plt.ylim(0,0.15)
-    plt.xticks([1,2], CLASSES)
-    plt.ylabel('# of neighbor CD8+ cells')
-    plt.title('gammaH2AX proximity to CD8 (%dpx)' % (v))
-    plt.savefig('gammaH2AX proximity to CD8 (%dpx).png' % (v))
-    plt.clf()
-
-elapsed_time = time.time() - start_time
-print(f"Time taken for the rest of the gammaH2AX - CD8 proximity analysis: {elapsed_time} seconds")
-print('')
-
-elapsed_time = time.time() - start_time0
-print(f'Time taken for the entire analysis.py run: {elapsed_time} seconds')
-"""
-
 

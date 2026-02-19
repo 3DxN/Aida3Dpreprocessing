@@ -1,4 +1,6 @@
 *.tif
+*.png
+*.pdf
 *.swp
 *.json
 *.csv
