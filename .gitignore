@@ -1,9 +1,11 @@
 *.tif
 *.swp
 *.json
+*.csv
 legacy
 venv
 __pycache__
 data/
 rawdata/
 tmp/
+temp/

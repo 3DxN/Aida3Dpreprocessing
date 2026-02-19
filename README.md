@@ -29,4 +29,25 @@ pip install -r requirements.txt
 ```
 
 
+## Data processing
 
+Steps include:
+- Converting Imaris data to TIFF 
+- Generating HnE
+
+
+
+
+1. Convert Imaris data
+Imaris data is assumed to include a metadata `xml` file describing the geometric arrangement of tiles and relative file paths to data of individual tiles. Tile image data is stored in `.ims` files referenced by the `.xml` file.
+
+`~/OMAL/250916aida3dData/012523_303_1_63X_stitchable.xml`
+
+
+`python genHnE.py data/012523_303_1_63X_stitchable.xml --TIFFwriteout ./data/TIFFtiles 1 --nuclearChannel 3 --cytoChannel 4 --fixedZposition 11`
+
+
+2. Run segmentation
+```
+python src/segmentation/predCellpose3D.py --inDir data/TIFFtiles/ --outDir data/CellposeSegementations --tileJsonFilename data/features/tileArrangement.json
+```
