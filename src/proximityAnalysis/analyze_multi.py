@@ -6,19 +6,15 @@ import time
 # from matplotlib import pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 from datetime import datetime
-from scipy import stats
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler, Normalizer
 from sklearn.cluster import KMeans
 from tqdm import tqdm
-import seaborn
 import json
-import umap
 from imaris_ims_file_reader.ims import ims_reader
 from config import SEGMENTATION_PATH, RAW_IMAGE_PATH, XML_FILES_PATH, CLASSES, gH2AX_threshold, cd8_threshold, gH2AX__pixel_count_threshold, N_PSEUDO_CLASSES, radii
-from utils_multi import get_cd8_segmentation_by_dilation, compute_features_for_roi, find_neighbors, process_label
+from utils_multi import get_cd8_segmentation_by_dilation, compute_features_for_roi, find_neighbors, numbers_of_neighbors_within_radius
 from joblib import Parallel, delayed
 
 import warnings

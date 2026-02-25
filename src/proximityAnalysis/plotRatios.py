@@ -25,9 +25,9 @@ parser = argparse.ArgumentParser(
 parser.add_argument('pct_cd8_json_file') 
 parser.add_argument('pct_gh2ax_json_file') 
 parser.add_argument('mean_intensity_gh2ax_json_file') 
-parser.add_argument('-p','--plot_output_format', type=str, default='png') 
+parser.add_argument('-p','--plot_output_format', type=str, default='pdf') 
 parser.add_argument('-c', '--classes', action='store', dest='classList',
-                    type=str, nargs='*', default=['control', 'treated'],
+                    type=str, nargs=2, default=['control', 'treated'],
                     help="Examples: -c control -c treated")
 parser.add_argument('--num_pseudo_classes', type=int, default = 5)
 
