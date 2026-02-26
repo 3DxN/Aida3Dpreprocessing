@@ -10,7 +10,7 @@ from glob import glob
 from geometryProcessor import gltfEncoder, morphologicalFeatures, textureFeatures, contextualFeatures
 from termcolor import colored
 from tifffile import imread
-from utils import fs_dir_params
+from ..segmentation.utils import fs_dir_params
 
 # Round float to n significant figures
 def round_to_n(x, n):

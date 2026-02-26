@@ -68,6 +68,6 @@ PlotRatios: error: the following arguments are required: pct_cd8_json_file, pct_
 ```
 e.g.,
 ```
-python src/proximityAnalysis/plotRatios.py pct_cd8_2026_02_19-11_24_40.json pct_gh2ax_2026_02_19-10_55_23.json mean_intensity_gh2ax_2026_02_19-11_24_40.json -c control control -p pdf
+python src/proximityAnalysis/plotRatios.py pct_cd8_2026_02_19-11_24_40.json pct_gh2ax_2026_02_19-10_55_23.json mean_intensity_gh2ax_2026_02_19-11_24_40.json -c control treated -p pdf
 ```
 

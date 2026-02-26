@@ -150,6 +150,7 @@ def get_neighbors_by_centroids(im1, im2, radius=[64]):
 
 			# Compute all pairwise distances between pixels of the two regions
 			d = cdist(coords1, coords2)  # shape (N1, N2)
+			####-> too slow. Use instead : from scipy.ndimage import distance_transform_edt
 
 			# Shortest distance between the two regions
 			min_dist = d.min()

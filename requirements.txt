@@ -6,12 +6,14 @@ imageio==2.37.0
 imaris-ims-file-reader==0.1.8
 jmespath==1.0.1
 lazy_loader==0.4
+mahotas==1.4.18
 matplotlib==3.10.8
 networkx==3.5
 numpy==1.26.4
 packaging==25.0
 pillow==12.0.0
-pyradiomics @ git+https://github.com/AIM-Harvard/pyradiomics@8ed579383b44806651c463d5e691f3b2b57522ab
+# pyradiomics @ git+https://github.com/AIM-Harvard/pyradiomics@8ed579383b44806651c463d5e691f3b2b57522ab # Dependency numpy>2.0 ; incompatible with python-javabridge
+pyradiomics @ git+https://github.com/AIM-Harvard/pyradiomics@f58f97812500ae4a5d01a8a88b7f817cee99e914 # last commit (prior 14 May 2025) not pinning numpy version
 python-bioformats==4.1.0
 python-dateutil==2.9.0.post0
 python-javabridge==4.0.4
