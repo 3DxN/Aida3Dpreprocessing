@@ -270,13 +270,13 @@ def main():
             print(colored(e.message,'red'))
         else:
             print(e)    
-        print (colored('XML file could not be parsed: '+ XMLinputfile,'green'))
+        print (colored('XML file could not be parsed: '+ args.XMLinputfile,'green'))
         sys.exit(2)
     imarisTeraStitcherMetaData_root = tree.getroot()
     
     voxel_dimensions = imarisTeraStitcherMetaData_root.find('voxel_dims')
     if voxel_dimensions is None:
-        print(colored("Error: No voxel dimension info found in Imaris xml file " + imarisXMLinfile.name, 'red'))
+        print(colored("Error: No voxel dimension info found in Imaris xml file " + args.imarisXMLinfile.name, 'red'))
         sys.exit(1)        
     print(colored('Voxel dimensions: ' + str(voxel_dimensions.attrib),'green'))        
         

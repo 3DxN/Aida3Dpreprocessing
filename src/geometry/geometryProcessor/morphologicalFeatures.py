@@ -79,8 +79,13 @@ def computeEllipsoidFits(nucleusCollectionVertices):
     ellipsoids = []
     for nucleusVertices in nucleusCollectionVertices:
         #pVertexData = np.array([[x[0][0],x[0][1],x[0][2]] for x in nucleusVertices])
-        pVertexData = np.array([[x[0],x[1],x[2]] for x in nucleusVertices])    
-        ellipsoid = ellipsoid_fit.fit(pVertexData) # (centre, evecs, radii)                          
+        pVertexData = np.array([[x[0],x[1],x[2]] for x in nucleusVertices])  
+        try:  
+            ellipsoid = ellipsoid_fit.fit(pVertexData) # (centre, evecs, radii)                          
+        except np.linalg.LinAlgError:
+            print(f"WARNING: Cannot fit ellipse to vertex data `pVertexData` - matrix may be singular!")
+            # Insert dummy value - avoid key error in `extractVisData.py`
+            ellipsoid = (np.array([0.0,0.0,0.0]), np.array([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]]), np.array([0.0,0.0,0.0]))  # centre, evecs, radii
         #print('EL', ellipsoid.centre, ellipsoid.evecs, ellipsoid.radii)
         ellipsoids.append(ellipsoid)
     return ellipsoids
@@ -110,10 +115,10 @@ def ellipsoidElongation(a,b,c):
         remainingAxis = c
         mainAxisIndex = 2
         mergedAxis = (a+b)/2       
+
+    elongation = abs(remainingAxis / mergedAxis) if mergedAxis > 0 else 1.0 # Dummy value 1.0 if axis length 0 following failed ellipsoid fit
         
-    elongation = abs(remainingAxis / mergedAxis) 
-        
-    return abs(remainingAxis / mergedAxis), mainAxisIndex 
+    return elongation, mainAxisIndex 
 
 
 def computeBiAxialElongations(ellipsoids):

@@ -22,7 +22,9 @@ scikit-image==0.25.2
 scikit-learn==1.8.0
 scipy==1.16.3
 seaborn==0.13.2
-six==1.17.0
+#stardist==0.6.2 # 28 Feb 2021 (0.6.0 -> 14 Jul 2020)  -> `ModuleNotFoundError: No module named 'setuptools.extern.six'` -> may need numpy>2.0.0!
+#stardist=0.7.3 -> `ModuleNotFoundError: No module named 'numpy.distutils'`
+#--> Stardist issue resolved by extracting required functions into `src/geometry/stardistGeo.py`. 3D startdist segmentation not supported (only mesh from labels)!
 termcolor==3.2.0
 tifffile==2025.10.16
 tqdm==4.67.1

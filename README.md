@@ -52,14 +52,25 @@ Imaris data is assumed to include a metadata `xml` file describing the geometric
 python src/segmentation/predCellpose3D.py --inDir data/TIFFtiles/ --outDir data/CellposeSegementations --tileJsonFilename data/features/tileArrangement.json
 ```
 
-3. Run CD8/GH2AX analysis
+3. Generate star-convex gemometry
+```
+python src/geometry/labels2starconvex3D.py data/CellposeSegementations 0 data/features/tileArrangement.json  
+```
+Parameter 0 indicates anisotropy read from file tileArrangement.json
+
+4. Construct meshes
+```
+python src/geometry/extractVisData.py --inDir data/CellposeSegementations --tileFile data/features/tileArrangement.json --outDir data/CellposeSegementations/
+```
+
+4. Run CD8/GH2AX analysis
 ```
 python src/proximityAnalysis/analyze_multi.py 
 
 ```
 Note: Set parameters in file `src/proximityAnalysis/config.py` (to be replaced by `argparse` interface)
 
-4. Plot results
+5. Plot results
 ```
 python src/proximityAnalysis/plotRatios.py 
 usage: PlotRatios [-h] [-p PLOT_OUTPUT_FORMAT] [-c [CLASSLIST ...]] [--num_pseudo_classes NUM_PSEUDO_CLASSES]

@@ -5,16 +5,13 @@ import pickle
 import sys
 
 from glob import glob
-from tqdm import tqdm
-from tifffile import imread
-from termcolor import colored
-
-from stardist import relabel_image_stardist3D, Rays_GoldenSpiral, calculate_extents
-from stardist import fill_label_holes, random_label_cmap
-from stardist import matching 
-from stardist.geometry import geom3d
-
 from skimage import measure
+from termcolor import colored
+from time import time
+
+from stardistGeo import Rays_GoldenSpiral
+from stardistGeo import _check_label_array #matching 
+from stardistGeo import star_dist3D #geom3d
 
 print('Converting LABEL image to starconvex geometry...')
 
@@ -62,7 +59,7 @@ rays = Rays_GoldenSpiral(numRays, anisotropy=anisotropy)
 imFiles = glob(directory+'/*.npy')
 
 for imFile in imFiles:
-    print('Processing image tile:', imFile)
+    print(f'Processing image tile: {imFile}', end= ' ', flush=True)
 
     #lbl = imread(imFile)
     imageData = np.load(imFile, allow_pickle=True).item()
@@ -71,17 +68,21 @@ for imFile in imFiles:
     lbl = masks
     probabilitesImage = flows[1].astype(np.uint8)
 
-    matching._check_label_array(lbl, "lbl")
+    print('.',end= '', flush=True)
+    _check_label_array(lbl, "lbl")
     if not lbl.ndim==3:
         raise ValueError("Label image should be 3 dimensional.")
 
-    dist_all = geom3d.star_dist3D(lbl, rays)
+    time1=time()
+    dist_all = star_dist3D(lbl, rays)
+    print(f'.(stardist3dTime={time()-time1})',end= '', flush=True)
     regs = measure.regionprops(lbl)
 
     points = np.array(tuple(np.array(r.centroid).astype(int) for r in regs))
     labels = np.array(tuple(r.label for r in regs))
     dist = np.array(tuple(dist_all[p[0], p[1], p[2]] for p in points))
     dist = np.maximum(dist, 1e-3)
+    print('.',end= '', flush=True)
 
     # Picking single point from probability image. 
     # Can be improved by sampling more points and averaging, or averaging over the entire label image.
@@ -97,5 +98,6 @@ for imFile in imFiles:
     nucleusGeometry['dist'] = dist
     nucleusGeometry['rays_faces'] = rays.faces
     nucleusGeometry['prob'] = np.array([p for p in nucleusProbabilites])
-
-    pickle.dump( nucleusGeometry, open( imFile+'.pickle', "wb" ) )
+    print('.',end= '', flush=True)
+    pickle.dump( nucleusGeometry, open( imFile+'.pickle', "wb" ) )  #TODO: replace with JSON; fix file name (currently `tile__H000_V001_CELLPOSE-LABELS_seg.npy.pickle`)!
+    print(' ', flush=True)

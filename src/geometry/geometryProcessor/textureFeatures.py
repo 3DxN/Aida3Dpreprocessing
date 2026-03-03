@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy.spatial import distance_matrix, ConvexHull
 from skimage.feature import peak_local_max 
-from skimage.measure import mesh_surface_area, marching_cubes_lewiner
+from skimage.measure import mesh_surface_area, marching_cubes
 from scipy.ndimage import distance_transform_edt
 
 #from mayavi.mlab import triangular_mesh,mesh,outline,show
@@ -153,7 +153,7 @@ def getLabelMapVolumeAndSurface(voxelMap,zAnisotropy):
     stardistLabelValue = voxelMap[vms[0]//2,vms[1]//2,vms[2]//2]
     labelMask = (voxelMap == stardistLabelValue)
 
-    verts, faces, _ , _ = marching_cubes_lewiner(labelMask, level=None, spacing=(1/zAnisotropy, 1.0, 1.0))#,\
+    verts, faces, _ , _ = marching_cubes(labelMask, level=None, spacing=(1/zAnisotropy, 1.0, 1.0))#,\
          #gradient_direction='descent', step_size=1, allow_degenerate=True, use_classic=False, mask=None)   
     surfaceArea = mesh_surface_area(verts, faces)
     """

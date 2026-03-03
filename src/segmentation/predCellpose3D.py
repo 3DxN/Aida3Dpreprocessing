@@ -108,13 +108,13 @@ for imageFileName, isNotEmpty in zip(tileDataDict['tiff3DFilesForSegmentation'],
         diameter=args.cellposeDiameter, do_3D=True,anisotropy=voxelAnisotropy,
         flow_threshold=0.4, z_axis=z_axis, progress=True) 
     print('Eval done.')
-    # Omit saving entire model output to npy file (required for Cellpose GUI only)
-    # io.masks_flows_to_seg(img, masks, flows, outFileLabelImagePath, channel)
+    # Flows required for computing nucleusProbabilites (in `src/geometry/labels2starconvex3D.py`)
+    io.masks_flows_to_seg(img, masks, flows, outFileLabelImagePath, channel) # Saved to file_names[k]+"_seg.npy"
     print('Processed ', outFileLabelImagePath)
     
     # save results as png
     #io.save_to_png(img, masks, flows, filename)
-    io.save_masks(img, masks, flows, outFileLabelImagePath, png=False, tif=True,  save_flows=False, save_outlines=True, save_txt=True, save_mpl=True)    
+    io.save_masks(img, masks, flows, outFileLabelImagePath, png=False, tif=True,  save_flows=True, save_outlines=True, save_txt=True, save_mpl=True)    
 
     #dY,dX,cellprob = flows[3]
     
