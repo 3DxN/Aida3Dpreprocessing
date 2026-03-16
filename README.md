@@ -71,3 +71,29 @@ e.g.,
 python src/proximityAnalysis/plotRatios.py pct_cd8_2026_02_19-11_24_40.json pct_gh2ax_2026_02_19-10_55_23.json mean_intensity_gh2ax_2026_02_19-11_24_40.json -c control control -p pdf
 ```
 
+## Snakemake workflow
+
+Use the Snakemake pipeline to run the full workflow from a single config file.
+
+1. Install Snakemake (in the same environment as the repo dependencies):
+```
+pip install snakemake
+```
+2. Edit `config.yaml`.
+3. Run individual steps or the full pipeline:
+```
+snakemake -j 1 hne
+snakemake -j 1 segmentation
+snakemake -j 1 analysis
+snakemake -j 1 plot
+snakemake -j 1 labels2starconvex3d
+snakemake -j 1 extract_vis_data
+snakemake -j 1
+```
+
+Notes:
+- The analysis step writes a JSON config for `src/proximityAnalysis/config.py` under `data/workflow_state`.
+- The plot step selects the most recent analysis outputs and creates `*_texture_features_w_neighbors.csv` aliases to match `plotRatios.py` expectations.
+- Geometry steps are controlled via the `geometry` section in `config.yaml`. Set `geometry.enabled: true` to include them in the default `snakemake -j 1` run.
+- `labels2starconvex3d` expects Cellpose `.npy` outputs (masks/flows). If you already have StarDist `*.pickle` outputs, set `geometry.run_labels2starconvex: false` and point `geometry.input_dir` to those pickles.
+- Use `snakemake -n -p` for a dry run with command printing.

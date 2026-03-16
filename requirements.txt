@@ -21,6 +21,7 @@ scikit-learn==1.8.0
 scipy==1.16.3
 seaborn==0.13.2
 six==1.17.0
+snakemake==9.17.1
 termcolor==3.2.0
 tifffile==2025.10.16
 tqdm==4.67.1

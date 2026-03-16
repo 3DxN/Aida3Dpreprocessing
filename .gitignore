@@ -3,6 +3,7 @@
 *.pdf
 *.swp
 *.json
+!workflow.example.json
 *.csv
 legacy
 venv
@@ -11,3 +12,4 @@ data/
 rawdata/
 tmp/
 temp/
+.snakemake/
