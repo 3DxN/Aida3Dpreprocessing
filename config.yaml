@@ -2,11 +2,11 @@ imaris_xml: rawdata/012523_303_1_63X_stitchable.xml
 output_dir: data
 
 hne:
-  hne_res_level: 1
+  hne_res_level: 0 # index for highest resolution level in Imaris data
   nuclear_channel: 3
   cyto_channel: 4
   fixed_z_position: 11
-  z_anisotropy: 2.0
+  z_anisotropy: 1.0
 
 segmentation:
   out_dir: data/CellposeSegmentations

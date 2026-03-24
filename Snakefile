@@ -237,23 +237,47 @@ rule hne:
 
         _ensure_dir(tiff_dir)
 
+        hne_res_level = hne_cfg.get("hne_res_level")
+        z_anisotropy = hne_cfg.get("z_anisotropy", 1.0)
+        try:
+            if hne_res_level is not None and float(hne_res_level) > 0:
+                print(
+                    f"Warning: hne.hne_res_level={hne_res_level} will downsample XY "
+                    "relative to the native Imaris resolution."
+                )
+        except (TypeError, ValueError):
+            print(f"Warning: hne.hne_res_level={hne_res_level} is not a number.")
+
+        try:
+            if z_anisotropy is not None and float(z_anisotropy) != 1.0:
+                print(
+                    f"Warning: hne.z_anisotropy={z_anisotropy} will downsample Z in TIFF output."
+                )
+        except (TypeError, ValueError):
+            print(f"Warning: hne.z_anisotropy={z_anisotropy} is not a number.")
+
+        mask_output = Path(hne_cfg.get("mask_output", "clusteringMask.tif")).name
+        nucl_output = Path(hne_cfg.get("nucl_output", "NUCLmaxIntensity.tif")).name
+        cyto_output = Path(hne_cfg.get("cyto_output", "CYTOmaxIntensity.tif")).name
+        hne_output = Path(hne_cfg.get("hne_output", "HNEmaxIntensity.tif")).name
+
         cmd = [
             sys.executable,
             str(ROOT / "src/HnE/genHnE.py"),
             str(imaris_xml),
             "--maskFile",
-            str(hne_cfg.get("mask_output", output_dir / "clusteringMask.tif")),
+            str(mask_output),
             "--outfileNUCLsubstackMaxIntensity",
-            str(hne_cfg.get("nucl_output", output_dir / "NUCLmaxIntensity.tif")),
+            str(nucl_output),
             "--outfileCYTOsubstackMaxIntensity",
-            str(hne_cfg.get("cyto_output", output_dir / "CYTOmaxIntensity.tif")),
+            str(cyto_output),
             "--outfileHNEmaxIntensity",
-            str(hne_cfg.get("hne_output", output_dir / "HNEmaxIntensity.tif")),
+            str(hne_output),
             "--tileArrangementFile",
             str(tile_json),
             "--TIFFwriteout",
             str(tiff_dir),
-            str(hne_cfg.get("z_anisotropy", 2.0)),
+            str(z_anisotropy),
         ]
 
         _add_arg(cmd, "--HnEresLevel", hne_cfg.get("hne_res_level"))
@@ -309,14 +333,15 @@ rule analysis:
     output:
         str(state_dir / "analysis.done")
     run:
-        _ensure_dir(analysis_dir)
+        analysis_dir_abs = Path(analysis_dir).resolve()
+        _ensure_dir(analysis_dir_abs)
         env = os.environ.copy()
         env["AIDA_CONFIG_PATH"] = str(Path(input[1]).resolve())
 
         subprocess.run(
             [sys.executable, str(ROOT / "src/proximityAnalysis/analyze_multi.py")],
             check=True,
-            cwd=str(analysis_dir),
+            cwd=str(analysis_dir_abs),
             env=env,
         )
         _touch(output[0])
@@ -332,13 +357,15 @@ rule plot:
         if not plot_classes or len(plot_classes) != 2:
             raise ValueError('Plotting requires exactly two classes in plot.classes or analysis.classes.')
 
-        json_inputs, run_id = _resolve_latest_jsons(analysis_dir)
+        analysis_dir_abs = Path(analysis_dir).resolve()
+        json_inputs, run_id = _resolve_latest_jsons(analysis_dir_abs)
+        json_inputs = {key: Path(path).resolve() for key, path in json_inputs.items()}  # Avoid 'path-doubling' issues
 
         for class_name in plot_classes:
-            csv_alias = _ensure_csv_alias(analysis_dir, class_name, run_id)
+            csv_alias = _ensure_csv_alias(analysis_dir_abs, class_name, run_id)
             if csv_alias is None:
                 raise FileNotFoundError(
-                    f'No texture feature CSV found for class "{class_name}" in {analysis_dir}'
+                    f'No texture feature CSV found for class "{class_name}" in {analysis_dir_abs}'
                 )
 
         num_pseudo = plot_cfg.get("num_pseudo_classes", analysis_cfg.get("n_pseudo_classes", 5))
@@ -359,7 +386,7 @@ rule plot:
             str(num_pseudo),
         ]
 
-        subprocess.run(cmd, check=True, cwd=str(analysis_dir))
+        subprocess.run(cmd, check=True, cwd=str(analysis_dir_abs))
         _touch(output[0])
 
 
