@@ -1,4 +1,5 @@
-imaris_xml: rawdata/012523_303_1_63X_stitchable.xml
+input_dir: data
+imaris_xml: raw/012523_303_1_63X_stitchable.xml
 output_dir: data
 
 hne:
@@ -9,7 +10,7 @@ hne:
   z_anisotropy: 1.0
 
 segmentation:
-  out_dir: data/CellposeSegmentations
+  out_dir: CellposeSegmentations
   cellpose_model: cyto
   cellpose_diameter: 30.0
   batch_size: 2
@@ -18,19 +19,19 @@ segmentation:
   gpu_device: "0"
 
 analysis:
-  output_dir: data/analysis
+  output_dir: analysis
   classes:
     - control
     - treated
   segmentation_path:
-    - data/CellposeSegmentations
-    - data/CellposeSegmentations
+    - CellposeSegmentations
+    - CellposeSegmentations
   raw_image_path:
-    - data/raw
-    - data/raw
+    - raw
+    - raw
   xml_files_path:
-    - data/raw/012523_303_1_63X_stitchable.xml
-    - data/raw/012523_303_1_63X_stitchable.xml
+    - raw/012523_303_1_63X_stitchable.xml
+    - raw/012523_303_1_63X_stitchable.xml
   gh2ax_threshold:
     - 1300
     - 1300
@@ -57,9 +58,9 @@ geometry:
   enabled: false
   run_labels2starconvex: true
   depends_on_segmentation: true
-  input_dir: data/CellposeSegmentations
-  output_dir: data/Cellpose3DGeometryAndFeatures
-  tile_json: data/tileArrangement.json
+  input_dir: CellposeSegmentations
+  output_dir: Cellpose3DGeometryAndFeatures
+  tile_json: tileArrangement.json
   anisotropy: 0.0
   compute_haralick: false
   separate_feature_files: false

@@ -132,26 +132,69 @@ analysis_cfg = _section("analysis")
 plot_cfg = _section("plot")
 geometry_cfg = _section("geometry")
 
-output_dir = Path(config.get("output_dir", "data"))
-state_dir = Path(config.get("workflow_state_dir", output_dir / "workflow_state"))
-analysis_dir = Path(analysis_cfg.get("output_dir", output_dir / "analysis"))
+_output_dir_raw = Path(config.get("output_dir", "data"))
+output_dir = _output_dir_raw if _output_dir_raw.is_absolute() else (ROOT / _output_dir_raw).resolve()
 
-imaris_xml = config.get("imaris_xml") or hne_cfg.get("imaris_xml")
-tiff_dir = Path(hne_cfg.get("tiff_dir", output_dir / "TIFFtiles"))
-tile_json = Path(hne_cfg.get("tile_arrangement_file", output_dir / "tileArrangement.json"))
+_input_dir_raw = Path(config.get("input_dir", output_dir))
+input_dir = _input_dir_raw if _input_dir_raw.is_absolute() else (ROOT / _input_dir_raw).resolve()
 
-seg_in_dir = Path(seg_cfg.get("in_dir", tiff_dir))
-seg_out_dir = Path(seg_cfg.get("out_dir", output_dir / "CellposeSegmentations"))
-seg_tile_json = Path(seg_cfg.get("tile_json", tile_json))
+
+def _abs_output_path(path):
+    if path is None:
+        return None
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return str(candidate)
+    if not _output_dir_raw.is_absolute():
+        out_parts = _output_dir_raw.parts
+        if out_parts and candidate.parts[:len(out_parts)] == out_parts:
+            return str((ROOT / candidate).resolve())
+    return str((output_dir / candidate).resolve())
+
+
+def _abs_input_path(path):
+    if path is None:
+        return None
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return str(candidate)
+
+    input_candidate = (input_dir / candidate).resolve()
+    if input_candidate.exists():
+        return str(input_candidate)
+
+    if input_dir.is_absolute() and candidate.parts:
+        if input_dir.name == candidate.parts[0]:
+            parent_candidate = (input_dir.parent / candidate).resolve()
+            if parent_candidate.exists():
+                return str(parent_candidate)
+
+    root_candidate = (ROOT / candidate).resolve()
+    if root_candidate.exists():
+        return str(root_candidate)
+
+    return str(input_candidate)
+
+
+state_dir = Path(_abs_output_path(config.get("workflow_state_dir", output_dir / "workflow_state")))
+analysis_dir = Path(_abs_output_path(analysis_cfg.get("output_dir", output_dir / "analysis")))
+
+imaris_xml = _abs_input_path(config.get("imaris_xml") or hne_cfg.get("imaris_xml"))
+tiff_dir = Path(_abs_output_path(hne_cfg.get("tiff_dir", output_dir / "TIFFtiles")))
+tile_json = Path(_abs_output_path(hne_cfg.get("tile_arrangement_file", output_dir / "tileArrangement.json")))
+
+seg_in_dir = Path(_abs_output_path(seg_cfg.get("in_dir", tiff_dir)))
+seg_out_dir = Path(_abs_output_path(seg_cfg.get("out_dir", output_dir / "CellposeSegmentations")))
+seg_tile_json = Path(_abs_output_path(seg_cfg.get("tile_json", tile_json)))
 
 geometry_enabled = bool(geometry_cfg.get("enabled", False))
 geometry_run_starconvex = bool(geometry_cfg.get("run_labels2starconvex", True))
 geometry_depends_on_segmentation = bool(geometry_cfg.get("depends_on_segmentation", True))
-geometry_input_dir = Path(geometry_cfg.get("input_dir", seg_out_dir))
+geometry_input_dir = Path(_abs_output_path(geometry_cfg.get("input_dir", seg_out_dir)))
 geometry_output_dir = Path(
-    geometry_cfg.get("output_dir", output_dir / "Cellpose3DGeometryAndFeatures")
+    _abs_output_path(geometry_cfg.get("output_dir", output_dir / "Cellpose3DGeometryAndFeatures"))
 )
-geometry_tile_json = Path(geometry_cfg.get("tile_json", tile_json))
+geometry_tile_json = Path(_abs_output_path(geometry_cfg.get("tile_json", tile_json)))
 geometry_anisotropy = geometry_cfg.get("anisotropy", 0.0)
 
 geometry_prereq = (
@@ -190,7 +233,7 @@ rule analysis_config:
         )
         raw_image_path = expand_list(
             analysis_cfg.get("raw_image_path"),
-            output_dir / "raw",
+            input_dir / "raw",
         )
         xml_files_path = expand_list(
             analysis_cfg.get("xml_files_path"),
@@ -200,9 +243,9 @@ rule analysis_config:
         payload = {
             "analysis": {
                 "classes": classes,
-                "segmentation_path": [_abs_path(p) for p in segmentation_path],
-                "raw_image_path": [_abs_path(p) for p in raw_image_path],
-                "xml_files_path": [_abs_path(p) for p in xml_files_path],
+                "segmentation_path": [_abs_output_path(p) for p in segmentation_path],
+                "raw_image_path": [_abs_input_path(p) for p in raw_image_path],
+                "xml_files_path": [_abs_input_path(p) for p in xml_files_path],
             }
         }
 
