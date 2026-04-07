@@ -49,6 +49,7 @@ mean_intensity_gh2ax = {}
 
 for idx, treatmentClass in enumerate(CLASSES):
     print(f'CLASS: {treatmentClass}')
+    print(f'Trying to open XML file: {XML_FILES_PATH[idx]}')
     tree = ET.parse(XML_FILES_PATH[idx])
     root = tree.getroot()
     pct_gh2ax[treatmentClass] = []

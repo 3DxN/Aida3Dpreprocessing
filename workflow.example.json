@@ -1,0 +1,63 @@
+{
+  "imaris_xml": "rawdata/012523_303_1_63X_stitchable.xml",
+  "output_dir": "data",
+  "hne": {
+    "hne_res_level": 1,
+    "nuclear_channel": 3,
+    "cyto_channel": 4,
+    "fixed_z_position": 11,
+    "z_anisotropy": 2.0
+  },
+  "segmentation": {
+    "out_dir": "data/CellposeSegmentations",
+    "cellpose_model": "cyto",
+    "cellpose_diameter": 30.0,
+    "batch_size": 2,
+    "anisotropy": 0.0,
+    "use_gpu": false,
+    "gpu_device": "0"
+  },
+  "analysis": {
+    "classes": [
+      "control",
+      "treated"
+    ],
+    "segmentation_path": [
+      "data/CellposeSegmentations",
+      "data/CellposeSegmentations"
+    ],
+    "raw_image_path": [
+      "data/raw",
+      "data/raw"
+    ],
+    "xml_files_path": [
+      "data/raw/012523_303_1_63X_stitchable.xml",
+      "data/raw/012523_303_1_63X_stitchable.xml"
+    ],
+    "gh2ax_threshold": [
+      1300,
+      1300
+    ],
+    "cd8_threshold": [
+      750,
+      1000
+    ],
+    "gh2ax_pixel_count_threshold": 100,
+    "radii": [
+      32,
+      48,
+      64,
+      128
+    ],
+    "n_pseudo_classes": 5,
+    "cd8_dapi_box_overlap_threshold": 0.2
+  },
+  "plot": {
+    "plot_output_format": "pdf",
+    "classes": [
+      "control",
+      "treated"
+    ],
+    "num_pseudo_classes": 5
+  }
+}
