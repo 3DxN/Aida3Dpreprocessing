@@ -233,7 +233,7 @@ rule analysis_config:
         )
         raw_image_path = expand_list(
             analysis_cfg.get("raw_image_path"),
-            input_dir / "raw",
+            input_dir ,#/ "raw",
         )
         xml_files_path = expand_list(
             analysis_cfg.get("xml_files_path"),
